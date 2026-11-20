@@ -1,0 +1,69 @@
+name: Build XO LAB (Unsigned IPA)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install pinned dependencies
+        run: npm ci
+
+      - name: Generate and sync Capacitor iOS project
+        run: |
+          if [ ! -f ios/App/App.xcodeproj/project.pbxproj ]; then
+            npx cap add ios
+          fi
+          npx cap sync ios
+
+      - name: Build for iPhone device (unsigned)
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package and verify unsigned IPA
+        run: |
+          APP="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/App.app"
+          test -d "$APP"
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")
+          lipo -verify_arch arm64 "$APP/$EXECUTABLE"
+          rm -rf "$RUNNER_TEMP/Payload"
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/Payload/XO-LAB.app"
+          cd "$RUNNER_TEMP"
+          /usr/bin/zip -qry XO-LAB-unsigned.ipa Payload
+          test -s "$RUNNER_TEMP/XO-LAB-unsigned.ipa"
+          unzip -t "$RUNNER_TEMP/XO-LAB-unsigned.ipa"
+          unzip -Z1 "$RUNNER_TEMP/XO-LAB-unsigned.ipa" | grep -qx 'Payload/XO-LAB.app/Info.plist'
+          echo 'Unsigned device IPA verified. Use your existing sideloading tool to sign and install it.'
+
+      - name: Upload unsigned IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: XO-LAB-unsigned-IPA
+          path: ${{ runner.temp }}/XO-LAB-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
