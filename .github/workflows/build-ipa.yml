@@ -49,7 +49,7 @@ jobs:
           APP="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/App.app"
           test -d "$APP"
           EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")
-          lipo -verify_arch arm64 "$APP/$EXECUTABLE"
+          lipo "$APP/$EXECUTABLE" -verify_arch arm64
           rm -rf "$RUNNER_TEMP/Payload"
           mkdir -p "$RUNNER_TEMP/Payload"
           cp -R "$APP" "$RUNNER_TEMP/Payload/XO-LAB.app"
