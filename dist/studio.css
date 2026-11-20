@@ -199,7 +199,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:26px;border-radius:5px;box
   .media{min-height:38px;padding:3px 7px;gap:5px;flex-wrap:nowrap;overflow:hidden}
   .media .file{min-height:34px;padding-inline:8px;font-size:11px}
   #audio-name{font-size:10px}
-  #notice{display:none}
+  #notice{display:block;min-height:28px;max-height:48px;overflow:auto;padding:6px 9px;font-size:11px;line-height:1.35}
   .inspector{min-height:0;height:100%;padding-bottom:env(safe-area-inset-bottom)}
   .inspector .panel{padding:11px 12px}
   .control input[type=range]{height:45px}

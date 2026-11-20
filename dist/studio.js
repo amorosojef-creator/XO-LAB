@@ -1,6 +1,10 @@
 import { createVisual } from './visual.js?v=13';
 
 const byId = (id) => document.getElementById(id);
+const store = {
+  get(key) { try { return localStorage.getItem(key); } catch { return null; } },
+  set(key, value) { try { localStorage.setItem(key, value); return true; } catch { return false; } }
+};
 const settings = {};
 const canvas = byId('canvas');
 const sample = document.createElement('canvas');
@@ -37,7 +41,7 @@ function setupPanels() {
     fold.setAttribute('aria-expanded', 'true'); fold.title = 'Collapse section';
     head.append(fold);
     const key = `xo-lab-panel-${panel.id || index}`;
-    const expanded = localStorage.getItem(key) !== 'false';
+    const expanded = store.get(key) !== 'false';
     panel.classList.toggle('is-collapsed', !expanded); body.hidden = !expanded;
     fold.setAttribute('aria-expanded', String(expanded));
     fold.addEventListener('click', () => {
@@ -46,7 +50,7 @@ function setupPanels() {
       fold.setAttribute('aria-expanded', String(open));
       fold.title = open ? 'Collapse section' : 'Expand section';
       fold.setAttribute('aria-label', fold.title);
-      localStorage.setItem(key, String(open));
+      store.set(key, String(open));
     });
   });
 }
@@ -743,7 +747,9 @@ video.requestVideoFrameCallback?.(trackDecodedFrame);
 video.addEventListener('loadedmetadata', () => {
   if (isDemo || !video.videoWidth || !video.videoHeight) return;
   resize(video.videoWidth, video.videoHeight);
-  beginDepth();
+  // Keep video import, playback, tracking, and dust responsive on iPhone.
+  // The ONNX model is memory-heavy, so load it only when the user requests depth.
+  updateDepthUI();
 });
 
 video.addEventListener('loadeddata', () => {
@@ -1324,7 +1330,7 @@ function applyState(state) {
     const panel = byId(id); const fold = panel?.querySelector('.panel-fold'); const body = panel?.querySelector('.panel-body');
     if (!panel || !fold || !body) continue;
     body.hidden = !expanded; panel.classList.toggle('is-collapsed', !expanded); fold.setAttribute('aria-expanded', String(expanded));
-    localStorage.setItem(`xo-lab-panel-${id}`, String(expanded));
+    store.set(`xo-lab-panel-${id}`, String(expanded));
   }
   if (state.view) setView(state.view);
   if (state.band) { band = state.band; activateButtons('[data-band]', 'band', band); }
@@ -1340,7 +1346,7 @@ function commitHistory() {
   }
   currentSnapshot = next;
   syncHistoryButtons();
-  try { localStorage.setItem(stateKey, stateString(next)); } catch {}
+  store.set(stateKey, stateString(next));
 }
 document.addEventListener('change', event => {
   if ((event.target.matches('input,select') && !['file'].includes(event.target.type)) || event.target.matches('.color-row')) commitHistory();
@@ -1354,11 +1360,11 @@ function restoreHistory(from, to) {
   const state = from.pop();
   applyState(state); currentSnapshot = captureState();
   syncHistoryButtons();
-  try { localStorage.setItem(stateKey, stateString(currentSnapshot)); } catch {}
+  store.set(stateKey, stateString(currentSnapshot));
 }
 byId('undo').addEventListener('click', () => restoreHistory(historyBack, historyForward));
 byId('redo').addEventListener('click', () => restoreHistory(historyForward, historyBack));
-function getPresets() { try { return JSON.parse(localStorage.getItem(presetKey) || '[]'); } catch { return []; } }
+function getPresets() { try { return JSON.parse(store.get(presetKey) || '[]'); } catch { return []; } }
 function renderPresets(selected = '') {
   const select = byId('preset-list');
   select.innerHTML = '<option value="">Presets</option>';
@@ -1369,7 +1375,7 @@ byId('save-preset').addEventListener('click', () => {
   const name = prompt('Name this effect preset');
   if (!name?.trim()) return;
   const presets = getPresets(); presets.push({ name: name.trim().slice(0, 48), state: captureState() });
-  try { localStorage.setItem(presetKey, JSON.stringify(presets.slice(-40))); renderPresets(String(Math.min(presets.length, 40) - 1)); message(`Preset “${name.trim()}” saved on this device.`); }
+  try { if (!store.set(presetKey, JSON.stringify(presets.slice(-40)))) throw new Error('Storage unavailable'); renderPresets(String(Math.min(presets.length, 40) - 1)); message(`Preset “${name.trim()}” saved on this device.`); }
   catch { message('Preset could not be saved. Device storage may be full.'); }
 });
 byId('load-preset').addEventListener('click', () => {
@@ -1379,12 +1385,12 @@ byId('load-preset').addEventListener('click', () => {
 });
 renderPresets();
 for (const slot of ['a', 'b']) byId(`compare-${slot}`).addEventListener('click', () => {
-  try { localStorage.setItem(`xo-lab-snapshot-${slot}`, stateString(captureState())); message(`Snapshot ${slot.toUpperCase()} saved.`); }
+  try { if (!store.set(`xo-lab-snapshot-${slot}`, stateString(captureState()))) throw new Error('Storage unavailable'); message(`Snapshot ${slot.toUpperCase()} saved.`); }
   catch { message('Snapshot could not be saved on this device.'); }
 });
 let compareSlot = 'a';
 byId('compare-toggle').addEventListener('click', event => {
-  const target = localStorage.getItem(`xo-lab-snapshot-${compareSlot}`);
+  const target = store.get(`xo-lab-snapshot-${compareSlot}`);
   if (!target) { message(`Save snapshot ${compareSlot.toUpperCase()} first.`); return; }
   historyBack.push(captureState()); historyForward = [];
   compareSlot = compareSlot === 'a' ? 'b' : 'a';
@@ -1406,7 +1412,7 @@ document.querySelectorAll('[data-jump]').forEach(button => button.addEventListen
   inspector.scrollTo({ top, behavior: 'smooth' });
 }));
 try {
-  const saved = JSON.parse(localStorage.getItem(stateKey) || 'null');
+  const saved = JSON.parse(store.get(stateKey) || 'null');
   if (saved?.values?.length) { applyState(saved); currentSnapshot = captureState(); }
 } catch {}
 if (!currentSnapshot) currentSnapshot = captureState();

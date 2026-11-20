@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="apple-touch-icon" href="./xo-lab-180.png">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./studio.css?v=11">
+  <link rel="stylesheet" href="./studio.css?v=12">
   <title>XO LAB — Depth Studio</title>
 </head>
 <body>
@@ -290,9 +290,19 @@
       <span id="export-format"></span><a class="light" id="download">Download clip</a><button class="outline" id="share" hidden>Share</button>
     </section>
   </main>
-  <video id="video" playsinline loop preload="auto"></video>
+  <video id="video" playsinline webkit-playsinline loop preload="metadata"></video>
   <audio id="audio" loop preload="auto"></audio>
+  <script>
+    (() => {
+      const report = (detail) => {
+        const target = document.getElementById('notice');
+        if (target) target.textContent = `XO LAB error: ${String(detail).slice(0, 180)}`;
+      };
+      window.addEventListener('error', event => report(event.message || 'The editor script failed to load.'));
+      window.addEventListener('unhandledrejection', event => report(event.reason?.message || event.reason || 'An editor task failed.'));
+    })();
+  </script>
   <script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js"}}</script>
-  <script type="module" src="./studio.js?v=18"></script>
+  <script type="module" src="./studio.js?v=19"></script>
 </body>
 </html>
