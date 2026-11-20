@@ -1,0 +1,8 @@
+node_modules/
+ios/App/Pods/
+ios/App/build/
+*.xcarchive/
+*.ipa
+*.p12
+*.mobileprovision
+.DS_Store

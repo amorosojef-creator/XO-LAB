@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="./xo-lab-180.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./studio.css?v=11">
+  <title>XO LAB — Depth Studio</title>
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="./" aria-label="XO LAB home"><span class="mark">XO</span><span>XO LAB</span></a>
+    <span class="edition">DEPTH STUDIO</span>
+    <button id="export" class="light" type="button">Export clip <span aria-hidden="true">↓</span></button>
+  </header>
+  <main>
+    <div class="intro"><h1>DEPTH<span>/</span>DUST</h1><div class="project"><span class="status-dot"></span><span id="project">Demo scene</span></div></div>
+    <div class="editor-tools" aria-label="Editing tools">
+      <button id="undo" class="plain" type="button" aria-label="Undo">↶ Undo</button>
+      <button id="redo" class="plain" type="button" aria-label="Redo">↷ Redo</button>
+      <button id="save-preset" class="plain" type="button">Save preset</button>
+      <select id="preset-list" aria-label="Load saved preset"><option value="">Presets</option></select>
+      <button id="load-preset" class="plain" type="button">Load</button>
+      <button id="compare-a" class="plain" type="button">Save A</button>
+      <button id="compare-b" class="plain" type="button">Save B</button>
+      <button id="compare-toggle" class="plain" type="button" aria-pressed="false">A/B compare</button>
+    </div>
+    <nav class="effect-shortcuts" aria-label="Jump to settings">
+      <button data-jump="blob-panel">Blob</button><button data-jump="object-panel">3D Object</button>
+      <button data-jump="warp-panel">Warp</button><button data-jump="strobe-panel">Strobe</button>
+      <button data-jump="dust-panel">Dust</button><button data-jump="audio-panel">Audio</button>
+      <button data-jump="color-panel">Color</button>
+    </nav>
+    <div class="workspace">
+      <section class="viewer" aria-label="Video preview">
+        <div class="viewer-top">
+          <div class="views" role="group" aria-label="Preview mode">
+            <button class="view" data-view="dust" aria-pressed="true">Dust Only</button>
+            <button class="view" data-view="effect" aria-pressed="false">Effect</button>
+            <button class="view" data-view="depth" aria-pressed="false">Depth</button>
+            <button class="view" data-view="source" aria-pressed="false">Source</button>
+          </div>
+          <span id="frame-size">960 × 540</span>
+          <button id="preview-size" class="preview-size" type="button" aria-pressed="false">Compact preview</button>
+        </div>
+        <div class="stage" id="stage">
+          <canvas id="canvas" width="960" height="540" aria-label="Live depth dust video effect"></canvas>
+          <p id="map-message" hidden></p>
+        </div>
+        <div class="transport">
+          <button id="play" class="light play" aria-label="Play" type="button"><span aria-hidden="true"></span></button>
+          <time id="time">00:00</time>
+          <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Playback position">
+          <time id="duration">00:08</time>
+          <button id="mute" aria-pressed="false" aria-label="Mute" class="mute">Sound</button>
+        </div>
+        <div class="media">
+          <label class="file"><span>＋ Video</span><input id="video-input" type="file" accept="video/*,.mov,.mp4,.m4v,.webm"></label>
+          <label class="file"><span>＋ Audio</span><input id="audio-input" type="file" aria-label="Add audio (MP3 or WAV)" accept=".mp3,.wav,audio/mpeg,audio/mp3,audio/wav,audio/wave,audio/x-wav"></label>
+          <label class="file"><span>＋ 3D Object</span><input id="object-input" type="file" aria-label="Add 3D Object (FBX, USDZ, GLB, glTF, or OBJ)" accept=".fbx,.usdz,.glb,.gltf,.obj,.mtl,.bin,.zip,.png,.jpg,.jpeg,.webp,.tga,.bmp,.gif,image/png,image/jpeg,image/webp" multiple></label>
+          <span id="audio-name">Demo audio</span>
+          <button class="plain" id="clear-audio" hidden>Remove</button>
+        </div>
+        <p id="notice" role="status">Video and audio are processed on this device.</p>
+      </section>
+      <aside class="inspector" aria-label="Effect settings">
+        <section class="panel blob-panel" id="blob-panel">
+          <div class="panel-top"><h2>Blob tracking</h2><label class="switch"><input id="blob-enabled" type="checkbox" aria-label="Blob tracking"><span></span></label></div>
+          <div id="blob-controls" hidden>
+            <div class="blob-status"><span id="blob-status">0 active</span><span>On Dust Only, Effect, and Source</span></div>
+            <label class="blob-select">Detect <select id="blob-mode"><option value="motion">Motion</option><option value="bright">White / bright</option><option value="dark">Black / dark</option></select></label>
+            <label class="control"><span>Sensitivity <output for="blob-sensitivity"></output></span><input id="blob-sensitivity" type="range" min="0" max="100" value="60"></label>
+            <label class="control"><span>Minimum size <output for="blob-minimum"></output></span><input id="blob-minimum" type="range" min="0" max="100" value="25"></label>
+            <label class="control"><span>Smoothing <output for="blob-smoothing"></output></span><input id="blob-smoothing" type="range" min="0" max="100" value="18"></label>
+            <label class="control"><span>Trail length <output for="blob-trail"></output></span><input id="blob-trail" type="range" min="0" max="100" value="36"></label>
+            <label class="control"><span>Max blobs <output for="blob-limit"></output></span><input id="blob-limit" type="range" min="1" max="48" value="12" data-unit=""></label>
+            <div class="blob-options options-wrap"><label><input id="blob-links" type="checkbox" checked> Links</label><label><input id="blob-tiles" type="checkbox"> Source tiles</label><label><input id="blob-trails" type="checkbox" checked> Trails</label><label><input id="blob-flicker" type="checkbox"> Flicker</label><label><input id="blob-sync" type="checkbox" checked> Audio sync</label></div>
+            <details class="effect-options">
+              <summary>Audio-reactive blob appearance</summary>
+              <div class="blob-options options-wrap"><label><input id="blob-audio-appear" type="checkbox"> Trigger appearance on audio</label></div>
+              <label class="blob-select">Audio band <select id="blob-audio-band"><option value="bass">Bass</option><option value="mid">Mid</option><option value="high">High</option></select></label>
+              <label class="control"><span>Audio threshold <output for="blob-audio-threshold"></output></span><input id="blob-audio-threshold" type="range" min="0" max="100" value="34"></label>
+              <label class="control"><span>Sensitivity <output for="blob-audio-sensitivity"></output></span><input id="blob-audio-sensitivity" type="range" min="0" max="100" value="65"></label>
+              <label class="control"><span>Appearance variation <output for="blob-audio-random"></output></span><input id="blob-audio-random" type="range" min="0" max="100" value="58"></label>
+              <label class="control"><span>Visible time <output for="blob-audio-duration"></output></span><input id="blob-audio-duration" type="range" min="100" max="1800" step="50" value="600" data-unit=" ms"></label>
+            </details>
+            <label class="control"><span>Flicker amount <output for="blob-flicker-amount"></output></span><input id="blob-flicker-amount" type="range" min="0" max="100" value="70"></label>
+            <details class="effect-options" id="blob-motion"><summary>Marker motion &amp; numbers</summary>
+              <div class="blob-options options-wrap"><label><input id="blob-size-pulse" type="checkbox"> Size pulse</label><label><input id="blob-random-numbers" type="checkbox"> Random numbers</label></div>
+              <label class="control"><span>Size pulse intensity <output for="blob-pulse-amount"></output></span><input id="blob-pulse-amount" type="range" min="0" max="100" value="45"></label>
+              <label class="blob-select">Number changes <select id="blob-number-mode"><option value="random">Irregular</option><option value="audio">Audio hits</option></select></label>
+            </details>
+            <details class="effect-options" id="blob-appearance"><summary>Box &amp; marker appearance</summary>
+              <div class="blob-options options-wrap"><label><input id="blob-box" type="checkbox" checked> Box</label><label><input id="blob-labels" type="checkbox" checked> Labels</label><label><input id="blob-center" type="checkbox" checked> Center marks</label></div>
+              <label class="blob-select">Box style <select id="blob-box-style"><option value="outline">Full outline</option><option value="corners">Corner brackets</option><option value="filled">Filled square</option></select></label>
+              <label class="control"><span>Padding <output for="blob-padding"></output></span><input id="blob-padding" type="range" min="0" max="100" value="13"></label>
+              <label class="control"><span>Line thickness <output for="blob-thickness"></output></span><input id="blob-thickness" type="range" min="0" max="100" value="22"></label>
+              <label class="control"><span>Box opacity <output for="blob-opacity"></output></span><input id="blob-opacity" type="range" min="0" max="100" value="90"></label>
+              <label class="control"><span>Box size <output for="blob-box-scale"></output></span><input id="blob-box-scale" type="range" min="0" max="100" value="50"></label>
+            </details>
+          </div>
+        </section>
+        <section class="panel" id="warp-panel">
+          <div class="panel-top"><h2>Video warp</h2><label class="switch"><input id="warp-enabled" type="checkbox" aria-label="Video warp"><span></span></label></div>
+          <div id="warp-controls" hidden>
+            <label class="blob-select">Mode <select id="warp-mode"><option value="depth">3D depth</option><option value="wave">Wave</option></select></label>
+            <label class="control"><span>Strength <output for="warp-amount"></output></span><input id="warp-amount" type="range" min="0" max="100" value="46"></label>
+            <label class="control"><span>Speed <output for="warp-speed"></output></span><input id="warp-speed" type="range" min="0" max="100" value="38"></label>
+            <div class="blob-options"><label><input id="warp-sync" type="checkbox" checked> Audio sync</label><span id="warp-status" class="note"></span></div>
+          </div>
+        </section>
+        <section class="panel" id="strobe-panel">
+          <div class="panel-top"><h2>Strobe</h2><label class="switch"><input id="strobe-enabled" type="checkbox" aria-label="Strobe"><span></span></label></div>
+          <div id="strobe-controls" hidden>
+            <label class="blob-select">Mode <select id="strobe-mode"><option value="white">White Flash</option><option value="invert">Color Invert</option><option value="alternate">Alternating White / Invert</option></select></label>
+            <label class="control"><span>Intensity <output for="strobe-intensity"></output></span><input id="strobe-intensity" type="range" min="0" max="100" value="64"></label>
+            <label class="control"><span>Flash duration <output for="strobe-duration"></output></span><input id="strobe-duration" type="range" min="20" max="180" value="75" step="5"></label>
+            <label class="control"><span>Flash rate <output for="strobe-rate"></output></span><input id="strobe-rate" type="range" min="0.5" max="3" value="2" step="0.1"></label>
+            <div class="blob-options"><label><input id="strobe-sync" type="checkbox"> Audio sync</label><span id="strobe-status" class="note">Ready</span></div>
+          </div>
+        </section>
+        <section class="panel object-panel" id="object-panel">
+          <div class="panel-top"><h2>3D Object</h2><label class="switch"><input id="object-enabled" type="checkbox" aria-label="3D Object"><span></span></label></div>
+          <div id="object-controls" hidden>
+            <p class="object-status"><span id="object-status">Sample cube ready</span><span id="object-model-name">Sample cube</span></p>
+            <p id="object-error" class="object-error" role="status" aria-live="polite" hidden></p>
+            <p class="note">Models stay on this device. Supported: FBX, USDZ, GLB/glTF, OBJ, plus optional MTL/textures or a ZIP bundle.</p>
+            <div class="blob-options object-buttons"><button id="object-sample" class="outline" type="button">Sample cube</button><button id="object-reset" class="outline" type="button">Reset transform</button><button id="object-remove" class="outline" type="button">Remove model</button></div>
+            <details class="effect-options" open>
+              <summary>Transform</summary>
+              <label class="control"><span>Position X <output for="object-x"></output></span><input id="object-x" type="range" min="0" max="100" value="50"></label>
+              <label class="control"><span>Position Y <output for="object-y"></output></span><input id="object-y" type="range" min="0" max="100" value="50"></label>
+              <label class="control"><span>Depth <output for="object-depth"></output></span><input id="object-depth" type="range" min="0" max="100" value="50"></label>
+              <label class="control"><span>Rotation X <output for="object-rx"></output></span><input id="object-rx" type="range" min="0" max="360" value="12" data-unit="°"></label>
+              <label class="control"><span>Rotation Y <output for="object-ry"></output></span><input id="object-ry" type="range" min="0" max="360" value="28" data-unit="°"></label>
+              <label class="control"><span>Rotation Z <output for="object-rz"></output></span><input id="object-rz" type="range" min="0" max="360" value="0" data-unit="°"></label>
+              <label class="control"><span>Scale <output for="object-scale"></output></span><input id="object-scale" type="range" min="5" max="200" value="72"></label>
+              <label class="control"><span>Width <output for="object-width"></output></span><input id="object-width" type="range" min="25" max="200" value="100"></label>
+              <label class="control"><span>Height <output for="object-height"></output></span><input id="object-height" type="range" min="25" max="200" value="100"></label>
+              <label class="control"><span>Depth scale <output for="object-zscale"></output></span><input id="object-zscale" type="range" min="25" max="200" value="100"></label>
+            </details>
+            <details class="effect-options" open>
+              <summary>Material &amp; render</summary>
+              <label class="control"><span>Object tint</span><input id="object-tint" type="color" value="#ffffff" aria-label="Object tint color"></label>
+              <label class="control"><span>Opacity <output for="object-opacity"></output></span><input id="object-opacity" type="range" min="0" max="100" value="100"></label>
+              <label class="control"><span>Brightness <output for="object-brightness"></output></span><input id="object-brightness" type="range" min="0" max="200" value="100"></label>
+              <label class="control"><span>Roughness <output for="object-roughness"></output></span><input id="object-roughness" type="range" min="0" max="100" value="55"></label>
+              <label class="control"><span>Layer</span><select id="object-layer" class="object-select"><option value="above">Above dust</option><option value="below">Below dust</option></select></label>
+              <div class="blob-options options-wrap"><label><input id="object-wireframe" type="checkbox"> Wireframe</label><label><input id="object-shadow" type="checkbox" checked> Ground shadow</label><label><input id="object-warp" type="checkbox"> Object Warp</label><label><input id="object-depth-assist" type="checkbox"> Depth assist</label></div>
+              <div class="blob-options options-wrap"><label><input id="object-glow-enabled" type="checkbox"> Wireframe Glow</label></div>
+              <div id="object-glow-controls" hidden>
+                <label class="blob-select">Glow style <select id="object-glow-style"><option value="bright">Bright</option><option value="gloomy">Gloomy haze</option></select></label>
+                <label class="blob-select">Glow placement <select id="object-glow-placement"><option value="outside">Outside</option><option value="inside">Inside</option><option value="both">Inside + outside</option></select></label>
+                <label class="control"><span>Glow intensity <output for="object-glow-intensity"></output></span><input id="object-glow-intensity" type="range" min="0" max="100" value="65"></label>
+                <label class="control"><span>Glow softness <output for="object-glow-radius"></output></span><input id="object-glow-radius" type="range" min="0" max="24" value="7" data-unit=" px"></label>
+                <label class="control"><span>Glow opacity <output for="object-glow-opacity"></output></span><input id="object-glow-opacity" type="range" min="0" max="100" value="75"></label>
+                <p class="note">Set the glow color in the Color section.</p>
+              </div>
+              <label class="control"><span>Render quality</span><select id="object-quality" class="object-select"><option value="balanced">Balanced</option><option value="low">Low · older iPhone</option><option value="high">High</option></select></label>
+              <p id="object-depth-note" class="note">Depth assist uses the current depth map when available.</p>
+            </details>
+            <details class="effect-options" open>
+              <summary>Tracking &amp; audio motion</summary>
+              <label class="control"><span>Motion mode</span><select id="object-anchor" class="object-select"><option value="fixed">Fixed position</option><option value="free">Free motion</option><option value="blob">Follow tracked region</option></select></label>
+              <label class="control"><span>Follow blob</span><select id="object-track" class="object-select"><option value="largest">Largest active region</option><option value="1">Marker 01</option><option value="2">Marker 02</option><option value="3">Marker 03</option><option value="4">Marker 04</option></select></label>
+              <label class="control"><span>Follow smoothing <output for="object-smoothing"></output></span><input id="object-smoothing" type="range" min="0" max="100" value="24"></label>
+              <div class="blob-options options-wrap"><label><input id="object-motion-pulse" type="checkbox"> Scale pulse</label><label><input id="object-motion-bounce" type="checkbox"> Position bounce</label></div>
+              <label class="control"><span>Motion intensity <output for="object-motion-intensity"></output></span><input id="object-motion-intensity" type="range" min="0" max="100" value="34"></label>
+              <div class="blob-options options-wrap"><label><input id="object-show-pivot" type="checkbox"> Show pivot</label><label><input id="object-pivot-export" type="checkbox"> Include pivot in export</label></div>
+              <div class="blob-options options-wrap"><label><input id="object-audio-sync" type="checkbox"> Audio sync</label><label><input id="object-hit-flash" type="checkbox"> Flash on audio hits</label></div>
+              <label class="control"><span>Audio band</span><select id="object-band" class="object-select"><option value="bass">Bass</option><option value="mid">Mid</option><option value="high">High</option></select></label>
+              <label class="control"><span>Audio response <output for="object-audio-response"></output></span><input id="object-audio-response" type="range" min="0" max="100" value="55"></label>
+            </details>
+            <details class="effect-options">
+              <summary>Touch transform</summary>
+              <div class="blob-options options-wrap"><label><input id="object-touch" type="checkbox"> Enable preview gestures</label></div>
+              <label class="control"><span>Gesture mode</span><select id="object-touch-mode" class="object-select"><option value="move">Move</option><option value="rotate">Rotate</option></select></label>
+              <p class="note">When gesture mode is on, drag inside the preview to edit the model. Turn it off to use normal preview gestures.</p>
+            </details>
+            <details class="effect-options" id="object-rotation-options">
+              <summary>Advanced Rotation</summary>
+              <div class="blob-options options-wrap"><label><input id="object-auto-rotate" type="checkbox"> Auto-rotate</label></div>
+              <p class="note">Axis controls animate local rotation around the model’s centered pivot. Manual angle sliders remain available above.</p>
+              <div class="blob-options options-wrap"><label><input id="object-rotate-x-enabled" type="checkbox" checked> Rotate X</label><label><input id="object-rotate-y-enabled" type="checkbox" checked> Rotate Y</label><label><input id="object-rotate-z-enabled" type="checkbox" checked> Rotate Z</label></div>
+              <label class="control"><span>X direction</span><select id="object-rotate-x-direction" class="object-select"><option value="1">Forward</option><option value="-1">Reverse</option></select></label>
+              <label class="control"><span>X speed <output for="object-rotate-x-speed"></output></span><input id="object-rotate-x-speed" type="range" min="0" max="180" value="42" data-unit=" °/s"></label>
+              <label class="control"><span>X intensity <output for="object-rotate-x-intensity"></output></span><input id="object-rotate-x-intensity" type="range" min="0" max="100" value="100"></label>
+              <label class="control"><span>Y direction</span><select id="object-rotate-y-direction" class="object-select"><option value="1">Forward</option><option value="-1">Reverse</option></select></label>
+              <label class="control"><span>Y speed <output for="object-rotate-y-speed"></output></span><input id="object-rotate-y-speed" type="range" min="0" max="180" value="58" data-unit=" °/s"></label>
+              <label class="control"><span>Y intensity <output for="object-rotate-y-intensity"></output></span><input id="object-rotate-y-intensity" type="range" min="0" max="100" value="100"></label>
+              <label class="control"><span>Z direction</span><select id="object-rotate-z-direction" class="object-select"><option value="1">Forward</option><option value="-1">Reverse</option></select></label>
+              <label class="control"><span>Z speed <output for="object-rotate-z-speed"></output></span><input id="object-rotate-z-speed" type="range" min="0" max="180" value="24" data-unit=" °/s"></label>
+              <label class="control"><span>Z intensity <output for="object-rotate-z-intensity"></output></span><input id="object-rotate-z-intensity" type="range" min="0" max="100" value="100"></label>
+              <label class="control"><span>Acceleration <output for="object-rotation-acceleration"></output></span><input id="object-rotation-acceleration" type="range" min="0" max="100" value="0"></label>
+              <div class="blob-options options-wrap"><label><input id="object-motion-rotate" type="checkbox"> Audio rotation kicks</label></div>
+              <label class="control"><span>Audio band</span><select id="object-rotation-band" class="object-select"><option value="bass">Bass</option><option value="mid">Mid</option><option value="high">High</option></select></label>
+              <label class="control"><span>Audio sensitivity <output for="object-rotation-sensitivity"></output></span><input id="object-rotation-sensitivity" type="range" min="0" max="100" value="65"></label>
+            </details>
+            <details class="effect-options" id="object-collapse-options">
+              <summary>Audio Collapse into Dust</summary>
+              <div class="blob-options options-wrap"><label><input id="object-collapse-enabled" type="checkbox"> Enable Audio Collapse</label></div>
+              <div id="object-collapse-controls" hidden>
+                <div class="blob-options object-actions"><button id="object-collapse-now" class="outline" type="button">Collapse now</button><button id="object-reform-now" class="outline" type="button">Reform object</button></div>
+                <div class="blob-options options-wrap"><label><input id="object-collapse-audio" type="checkbox" checked> Trigger on audio</label><label><input id="object-collapse-auto-reform" type="checkbox" checked> Auto-reform</label></div>
+                <label class="control"><span>Audio band</span><select id="object-collapse-band" class="object-select"><option value="bass">Bass</option><option value="mid">Mid</option><option value="high">High</option></select></label>
+                <label class="control"><span>Audio threshold <output for="object-collapse-threshold"></output></span><input id="object-collapse-threshold" type="range" min="0" max="100" value="38"></label>
+                <label class="control"><span>Sensitivity <output for="object-collapse-sensitivity"></output></span><input id="object-collapse-sensitivity" type="range" min="0" max="100" value="65"></label>
+                <label class="control"><span>Collapse intensity <output for="object-collapse-intensity"></output></span><input id="object-collapse-intensity" type="range" min="0" max="100" value="72"></label>
+                <label class="control"><span>Particle count <output for="object-collapse-count"></output></span><input id="object-collapse-count" type="range" min="300" max="12000" step="100" value="3600" data-unit=""></label>
+                <label class="control"><span>Particle size <output for="object-collapse-size"></output></span><input id="object-collapse-size" type="range" min="0.5" max="8" step="0.5" value="2" data-unit=" px"></label>
+                <label class="control"><span>Spread <output for="object-collapse-spread"></output></span><input id="object-collapse-spread" type="range" min="0" max="100" value="64"></label>
+                <label class="control"><span>Drift <output for="object-collapse-drift"></output></span><input id="object-collapse-drift" type="range" min="0" max="100" value="34"></label>
+                <label class="control"><span>Gravity <output for="object-collapse-gravity"></output></span><input id="object-collapse-gravity" type="range" min="0" max="100" value="22"></label>
+                <label class="control"><span>Collapse duration <output for="object-collapse-duration"></output></span><input id="object-collapse-duration" type="range" min="100" max="2400" step="50" value="650" data-unit=" ms"></label>
+                <label class="control"><span>Reform delay <output for="object-collapse-reform-delay"></output></span><input id="object-collapse-reform-delay" type="range" min="0" max="4000" step="100" value="350" data-unit=" ms"></label>
+                <label class="control"><span>Fade time <output for="object-collapse-fade"></output></span><input id="object-collapse-fade" type="range" min="100" max="3000" step="100" value="900" data-unit=" ms"></label>
+                <div class="blob-options options-wrap"><label><input id="object-collapse-use-dust" type="checkbox" checked> Use Dust color</label></div>
+                <label class="control"><span>Particle color</span><input id="object-collapse-color" type="color" value="#ffffff" aria-label="Collapse particle color"></label>
+                <label class="control"><span>Particle opacity <output for="object-collapse-opacity"></output></span><input id="object-collapse-opacity" type="range" min="0" max="100" value="90"></label>
+                <p id="object-collapse-status" class="note" role="status">Manual collapse ready. Audio triggers need active audio playback.</p>
+              </div>
+            </details>
+          </div>
+        </section>
+        <section class="panel depth-panel" id="depth-panel">
+          <div class="panel-top"><h2>Depth</h2><span id="depth-state" aria-live="polite">Demo geometry</span></div>
+          <div class="depth-scale"><span>FAR</span><i></i><span>NEAR</span></div>
+          <button id="analyze" class="outline wide" type="button" hidden>Analyze depth</button>
+          <p id="depth-hint" class="note" hidden></p>
+          <label class="control"><span>Depth mix <output for="depth-mix"></output></span><input id="depth-mix" type="range" min="0" max="100" value="64"></label>
+          <label class="control"><span>Contours <output for="contours"></output></span><input id="contours" type="range" min="0" max="100" value="72"></label>
+        </section>
+        <section class="panel" id="dust-panel">
+          <div class="panel-top"><h2>White dust</h2><label class="switch"><input id="dust-enabled" type="checkbox" aria-label="White dust" checked><span></span></label></div>
+          <label class="control"><span>Density <output for="density"></output></span><input id="density" type="range" min="0" max="100" value="66"></label>
+          <label class="control"><span>Size <output for="size"></output></span><input id="size" type="range" min="0.5" max="4" step=".1" value="1.4" data-unit=" px"></label>
+          <label class="control"><span>Drift <output for="drift"></output></span><input id="drift" type="range" min="0" max="100" value="34"></label>
+          <label class="control"><span>Brightness <output for="brightness"></output></span><input id="brightness" type="range" min="0" max="100" value="88"></label>
+          <label class="control"><span>Grain flicker <output for="grain"></output></span><input id="grain" type="range" min="0" max="100" value="62"></label>
+          <label class="control"><span>Surface detail <output for="surface"></output></span><input id="surface" type="range" min="0" max="100" value="56"></label>
+        </section>
+        <section class="panel audio-panel" id="audio-panel">
+          <div class="panel-top"><h2>Audio response</h2><label class="switch"><input id="reactive" type="checkbox" checked aria-label="Dust audio reactivity"><span></span></label></div>
+          <div class="audio-meter"><canvas id="meter" width="260" height="34" aria-label="Live audio spectrum"></canvas></div>
+          <div class="bands" role="group" aria-label="Audio frequency band">
+            <button data-band="bass" aria-pressed="true">Bass</button><button data-band="mid" aria-pressed="false">Mid</button><button data-band="high" aria-pressed="false">High</button>
+          </div>
+          <label class="control"><span>Impact <output for="impact"></output></span><input id="impact" type="range" min="0" max="100" value="68"></label>
+          <details class="effect-options" open>
+            <summary>Audio trim &amp; cut</summary>
+            <p id="audio-trim-status" class="note">Import an MP3 or WAV to trim it.</p>
+            <canvas id="audio-waveform" width="900" height="96" aria-label="Audio waveform with trim handles"></canvas>
+            <label class="control audio-scrub-control"><span>Audio playhead <output for="audio-scrub"></output></span><input id="audio-scrub" type="range" min="0" max="1000" value="0" aria-label="Scrub selected audio"></label>
+            <div class="audio-trim-fields">
+              <label>Start (seconds)<input id="audio-trim-start" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+              <label>End (seconds)<input id="audio-trim-end" type="number" min="0.01" step="0.01" value="0" inputmode="decimal"></label>
+              <label>Length<input id="audio-trim-length" type="text" value="0.00 s" readonly></label>
+            </div>
+            <div class="blob-options options-wrap audio-trim-actions">
+              <button id="audio-play-selection" class="outline" type="button">Play selection</button>
+              <button id="audio-set-start" class="outline" type="button">Set start to playhead</button>
+              <button id="audio-set-end" class="outline" type="button">Set end to playhead</button>
+              <button id="audio-reset-trim" class="outline" type="button">Reset trim</button>
+            </div>
+            <label class="control"><span>Fade in <output for="audio-fade-in"></output></span><input id="audio-fade-in" type="range" min="0" max="3000" step="100" value="0" data-unit=" ms"></label>
+            <label class="control"><span>Fade out <output for="audio-fade-out"></output></span><input id="audio-fade-out" type="range" min="0" max="3000" step="100" value="0" data-unit=" ms"></label>
+          </details>
+        </section>
+        <section class="panel color-panel" id="color-panel">
+          <div class="panel-top"><h2>Effect colors</h2><button id="mono-reset" class="plain" type="button">Monochrome reset</button></div>
+          <div id="color-controls"></div>
+        </section>
+        <section class="panel" id="export-panel">
+          <div class="panel-top"><h2>Export settings</h2></div>
+          <label class="blob-select">Format <select id="export-format-choice"><option value="mp4">MP4</option><option value="webm">WebM</option></select></label>
+          <label class="blob-select">Resolution <select id="export-resolution"><option value="source">Source size</option><option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option></select></label>
+          <label class="blob-select">Frame rate <select id="export-fps"><option value="30">30 fps</option><option value="24">24 fps</option><option value="60">60 fps</option></select></label>
+          <label class="blob-select">Quality <select id="export-quality"><option value="standard">Standard</option><option value="high">High</option></select></label>
+          <p id="export-estimate" class="note">Estimated size: —</p>
+          <p id="export-capability" class="note" role="status"></p>
+          <div id="export-progress-wrap" hidden><progress id="export-progress" max="100" value="0"></progress><span id="export-progress-label">Preparing export…</span></div>
+        </section>
+      </aside>
+    </div>
+    <div class="footer"><button id="reset" class="plain">Reset FX</button><button id="demo" class="plain">Load demo</button></div>
+    <section id="export-result" class="export-result" hidden aria-label="Exported video">
+      <span id="export-format"></span><a class="light" id="download">Download clip</a><button class="outline" id="share" hidden>Share</button>
+    </section>
+  </main>
+  <video id="video" playsinline loop preload="auto"></video>
+  <audio id="audio" loop preload="auto"></audio>
+  <script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js"}}</script>
+  <script type="module" src="./studio.js?v=18"></script>
+</body>
+</html>

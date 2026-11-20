@@ -1,0 +1,9 @@
+{
+  "appId": "com.floroxo.xolab",
+  "appName": "XO LAB",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "automatic",
+    "preferredContentMode": "mobile"
+  }
+}
